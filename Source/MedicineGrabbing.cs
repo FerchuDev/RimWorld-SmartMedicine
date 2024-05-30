@@ -88,7 +88,7 @@ namespace SmartMedicine
 				//ignore defaultCare if none uses default
 				if (PriorityCareComp.AllPriorityCare(hediffs))
 					defaultCare = maxPriorityCare;
-				
+
 				//Find highest care
 				MedicalCareCategory highestCare = defaultCare > maxPriorityCare ? defaultCare : maxPriorityCare;
 				Log.Message($"maxPriorityCare is {maxPriorityCare}, defaultCare is {defaultCare}, highestCare is {highestCare}");
@@ -377,7 +377,7 @@ namespace SmartMedicine
 			var hediffCare = PriorityCareComp.Get();
 			List<Hediff> hediffsToTend = HediffsToTend(patient);
 			Log.Message($"Tending ({hediffsToTend.ToStringSafeEnumerable()})");
-			foreach(Hediff h in hediffsToTend)
+			foreach (Hediff h in hediffsToTend)
 			{
 				MedicalCareCategory toUse = defaultCare;
 				if (hediffCare.TryGetValue(h, out MedicalCareCategory heCare))
@@ -386,6 +386,13 @@ namespace SmartMedicine
 				finalCare = toUse > finalCare ? toUse : finalCare;
 			}
 			Log.Message($"Care for {patient} is {defaultCare}, Custom care = {finalCare}");
+
+			//WORKAROUND for Allowed Care < hediff care bug
+			if (defaultCare < finalCare)
+			{
+				Log.Message("Pawn Allowed Care is lower than hediff care! Elevating Allowed Care as workaround");
+				patient.playerSettings.medCare = finalCare;
+			}
 
 			//Android Droid support;
 			Predicate<Thing> validatorDroid = t => true;
@@ -503,7 +510,7 @@ namespace SmartMedicine
 				Log.Message($"Medicine count = {count}");
 
 				bestMed.DebugLog("Best Med on " + (bestMed.pawn == null ? "ground" : "hand") + ":");
-				
+
 				int usedCount = Mathf.Min(bestMed.thing.stackCount, count);
 				result.Add(new ThingCount(bestMed.thing, usedCount));
 				count -= usedCount;
